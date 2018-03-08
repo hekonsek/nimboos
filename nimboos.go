@@ -8,21 +8,44 @@ import (
 )
 
 func main() {
-	envCreateYml, err := Asset("data/env-create.yml")
-	exitOnError(err)
+	if os.Args[1] == "env" && os.Args[2] == "create" {
+		cacheAnsibleCommand("env-create")
 
-	err = ioutil.WriteFile("/tmp/nimboos-env-create.yml", envCreateYml, 0644)
-	exitOnError(err)
+		env := os.Args[3]
+		cmd := exec.Command("ansible-playbook","/tmp/nimboos-env-create.yml", fmt.Sprintf("-e vpc_name=%s", env))
+		stdoutStderr, err := cmd.CombinedOutput()
+		exitOnError(err, string(stdoutStderr))
+		fmt.Println(string(stdoutStderr))
+	} else if os.Args[1] == "env" && os.Args[2] == "remove" {
+		cacheAnsibleCommand("env-remove")
 
-	cmd := exec.Command("ansible-playbook", "/tmp/nimboos-env-create.yml", "-e vpc_name=nimboos_test1")
-	stdoutStderr, err := cmd.CombinedOutput()
-	exitOnError(err)
-	fmt.Println(string(stdoutStderr))
+		env := os.Args[3]
+		cmd := exec.Command("ansible-playbook","/tmp/nimboos-env-remove.yml", fmt.Sprintf("-e vpc_name=%s", env))
+		stdoutStderr, err := cmd.CombinedOutput()
+		exitOnError(err, string(stdoutStderr))
+		fmt.Println(string(stdoutStderr))
+	} else {
+		fmt.Println("Unknown command.")
+	}
 }
 
-func exitOnError(err error) {
+// Ansible
+
+func cacheAnsibleCommand(command string)  {
+	yml, err := Asset(fmt.Sprintf("data/%s.yml", command))
+	exitOnError(err)
+	err = ioutil.WriteFile(fmt.Sprintf("/tmp/nimboos-%s.yml", command), yml, 0644)
+	exitOnError(err)
+}
+
+// Utils
+
+func exitOnError(err error, context... interface{}) {
 	if err != nil {
 		fmt.Println(err)
+		if len(context) > 0 {
+			fmt.Println(context)
+		}
 		os.Exit(-1)
 	}
 }

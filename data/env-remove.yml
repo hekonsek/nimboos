@@ -2,4 +2,4 @@
   connection: local
   gather_facts: false
   roles:
-    - { role: hekonsek.ec2-vpc-single,0.1 }
+    - { role: hekonsek.ec2-vpc-single-remove,0.0 }
